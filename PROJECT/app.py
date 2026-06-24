@@ -1,58 +1,30 @@
 from flask import Flask,render_template,request,jsonify
 import pandas as pd
 import os
-import sqlite3
 from datetime import datetime
 
 app=Flask(__name__)
 
 UPLOAD_FOLDER="uploads"
-DATABASE="cybershield.db"
 
-os.makedirs(UPLOAD_FOLDER,exist_ok=True)
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+)
+
 app.config["UPLOAD_FOLDER"]=UPLOAD_FOLDER
 
 
-def init_database():
+# =========================
+# GLOBAL LIVE STORAGE
+# =========================
 
-    conn=sqlite3.connect(DATABASE)
-
-    c=conn.cursor()
-
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS packets(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp TEXT,
-    src_ip TEXT,
-    dst_ip TEXT,
-    protocol TEXT,
-    src_port TEXT,
-    dst_port TEXT,
-    packet_size TEXT,
-    duration TEXT,
-    score TEXT,
-    prediction TEXT,
-    risk TEXT,
-    reason TEXT,
-    action TEXT
-    )
-    """)
-
-    conn.commit()
-
-    conn.close()
+LIVE_DATA=[]
 
 
-init_database()
-
-
-def get_connection():
-
-    return sqlite3.connect(
-        DATABASE,
-        check_same_thread=False
-    )
-
+# =========================
+# GRAPH CREATION
+# =========================
 
 def create_graph(records):
 
@@ -63,16 +35,14 @@ def create_graph(records):
     for r in records:
 
         src=r.get("Source IP")
-
         dst=r.get("Destination IP")
-
 
         if src and src not in added:
 
             nodes.append(
                 {
-                "id":src,
-                "label":src
+                    "id":src,
+                    "label":src
                 }
             )
 
@@ -83,8 +53,8 @@ def create_graph(records):
 
             nodes.append(
                 {
-                "id":dst,
-                "label":dst
+                    "id":dst,
+                    "label":dst
                 }
             )
 
@@ -95,8 +65,8 @@ def create_graph(records):
 
             edges.append(
                 {
-                "from":src,
-                "to":dst
+                    "from":src,
+                    "to":dst
                 }
             )
 
@@ -111,7 +81,10 @@ def count_values(records,key):
 
     for r in records:
 
-        value=r.get(key,"Unknown")
+        value=r.get(
+            key,
+            "Unknown"
+        )
 
         result[value]=result.get(value,0)+1
 
@@ -120,162 +93,146 @@ def count_values(records,key):
 
 
 
-def summary(records,nodes):
+def create_summary(records,nodes):
 
     return {
 
-    "total":len(records),
+        "total":len(records),
 
-    "nodes":len(nodes),
+        "nodes":len(nodes),
 
-    "normal":
-    sum(x.get("Prediction")=="Normal" for x in records),
+        "normal":
+        sum(
+            x.get("Prediction")=="Normal"
+            for x in records
+        ),
 
-    "suspicious":
-    sum(x.get("Prediction")=="Suspicious" for x in records),
+        "suspicious":
+        sum(
+            x.get("Prediction")=="Suspicious"
+            for x in records
+        ),
 
-    "attack":
-    sum(x.get("Prediction")=="Attack" for x in records)
+        "attack":
+        sum(
+            x.get("Prediction")=="Attack"
+            for x in records
+        )
 
     }
 
 
 
-def load_live_packets():
-
-    conn=get_connection()
-
-    rows=conn.execute(
-        "SELECT * FROM packets ORDER BY id DESC LIMIT 200"
-    ).fetchall()
-
-    conn.close()
-
-
-    data=[]
-
-
-    for r in rows:
-
-        data.append({
-
-        "Timestamp":r[1],
-
-        "Source IP":r[2],
-
-        "Destination IP":r[3],
-
-        "Protocol":r[4],
-
-        "Source Port":r[5],
-
-        "Destination Port":r[6],
-
-        "Packet Size":r[7],
-
-        "Duration":r[8],
-
-        "Graph Score":r[9],
-
-        "Prediction":r[10],
-
-        "Risk Level":r[11],
-
-        "Reason":r[12],
-
-        "Recommended Action":r[13]
-
-        })
-
-
-    return data
-
-
-
+# =========================
+# RECEIVE AGENT DATA
+# =========================
 
 @app.route("/agent",methods=["POST"])
-def receive_agent():
+def agent():
+
+    global LIVE_DATA
+
 
     data=request.json
 
 
-    conn=get_connection()
+    packet={
 
-    conn.execute(
-    """
-    INSERT INTO packets(
-    timestamp,
-    src_ip,
-    dst_ip,
-    protocol,
-    src_port,
-    dst_port,
-    packet_size,
-    duration,
-    score,
-    prediction,
-    risk,
-    reason,
-    action
-    )
-    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """,
-    (
+        "Timestamp":
+        datetime.now().strftime("%H:%M:%S"),
 
-    datetime.now().strftime("%H:%M:%S"),
+        "Source IP":
+        data.get("src_ip"),
 
-    data.get("src_ip"),
+        "Destination IP":
+        data.get("dst_ip"),
 
-    data.get("dst_ip"),
+        "Protocol":
+        data.get("protocol"),
 
-    data.get("protocol"),
+        "Source Port":
+        data.get("src_port"),
 
-    data.get("src_port"),
+        "Destination Port":
+        data.get("dst_port"),
 
-    data.get("dst_port"),
+        "Packet Size":
+        data.get("packet_size"),
 
-    data.get("packet_size"),
+        "Duration":
+        data.get("duration"),
 
-    data.get("duration"),
+        "Graph Score":
+        data.get("score"),
 
-    data.get("score"),
+        "Prediction":
+        data.get(
+            "prediction",
+            "Normal"
+        ),
 
-    data.get("prediction"),
+        "Risk Level":
+        data.get("risk"),
 
-    data.get("risk"),
+        "Reason":
+        data.get("reason"),
 
-    data.get("reason"),
+        "Recommended Action":
+        data.get("action")
 
-    data.get("action")
-
-    )
-    )
+    }
 
 
-    conn.commit()
-
-    count=conn.execute(
-        "SELECT COUNT(*) FROM packets"
-    ).fetchone()[0]
+    LIVE_DATA.append(packet)
 
 
-    conn.close()
+    LIVE_DATA=LIVE_DATA[-300:]
 
 
     print(
-        "DATABASE PACKETS:",
-        count
+
+        "PACKETS RECEIVED:",
+
+        len(LIVE_DATA)
+
     )
 
 
     return jsonify(
+
         {
-        "status":"received",
-        "stored":count
+
+            "status":"received",
+
+            "stored":len(LIVE_DATA)
+
         }
+
     )
 
 
+
+# TEST URL
+@app.route("/api/live")
+def api_live():
+
+    return jsonify(
+
+        {
+
+            "count":len(LIVE_DATA),
+
+            "data":LIVE_DATA[-5:]
+
+        }
+
+    )
+
+
+
+# =========================
+# MAIN WEBSITE
+# =========================
 
 
 @app.route("/",methods=["GET","POST"])
@@ -295,29 +252,32 @@ def index():
 
     alerts=[]
 
-    active_section="dashboard"
-
     success=None
 
     error=None
 
+    active_section="dashboard"
 
-    data_summary={
 
-    "total":0,
 
-    "nodes":0,
+    summary={
 
-    "normal":0,
+        "total":0,
 
-    "suspicious":0,
+        "nodes":0,
 
-    "attack":0
+        "normal":0,
+
+        "suspicious":0,
+
+        "attack":0
 
     }
 
 
+
     if request.method=="POST":
+
 
         action=request.form.get("action")
 
@@ -325,7 +285,7 @@ def index():
         if action=="live":
 
 
-            live_results=load_live_packets()
+            live_results=LIVE_DATA
 
 
             graph_nodes,graph_edges=create_graph(
@@ -345,7 +305,7 @@ def index():
             )
 
 
-            data_summary=summary(
+            summary=create_summary(
                 live_results,
                 graph_nodes
             )
@@ -353,16 +313,51 @@ def index():
 
             alerts=[
 
-            x for x in live_results
+                x for x in live_results
 
-            if x.get("Prediction")!="Normal"
+                if x["Prediction"]!="Normal"
 
             ]
 
 
-            success="Live capture loaded"
+            success="Live Capture Loaded"
+
 
             active_section="live"
+
+
+
+        elif action=="upload":
+
+
+            file=request.files["dataset"]
+
+
+            path=os.path.join(
+
+                UPLOAD_FOLDER,
+
+                file.filename
+
+            )
+
+
+            file.save(path)
+
+
+            df=pd.read_csv(path)
+
+
+            dataset_results=df.to_dict(
+                "records"
+            )
+
+
+            success="Dataset Loaded"
+
+
+            active_section="dataset"
+
 
 
 
@@ -384,7 +379,7 @@ def index():
 
         alerts=alerts,
 
-        summary=data_summary,
+        summary=summary,
 
         success=success,
 
@@ -398,9 +393,21 @@ def index():
 
 if __name__=="__main__":
 
-    port=int(os.environ.get("PORT",5000))
+
+    port=int(
+
+        os.environ.get(
+            "PORT",
+            5000
+        )
+
+    )
+
 
     app.run(
+
         host="0.0.0.0",
+
         port=port
+
     )

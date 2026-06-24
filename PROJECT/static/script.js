@@ -1,6 +1,6 @@
-// ========================================
-// SECTION NAVIGATION + ACTIVE MENU
-// ========================================
+// ===============================
+// SECTION NAVIGATION
+// ===============================
 
 function showSection(section){
 
@@ -12,130 +12,149 @@ function showSection(section){
 
     let current=document.getElementById(section);
 
+
     if(current){
+
         current.style.display="block";
+
     }
 
 
-    // active navbar highlight
 
     document.querySelectorAll(".menu button")
     .forEach(btn=>{
+
         btn.classList.remove("active-menu");
+
     });
 
 
-    let active=document.getElementById("nav-"+section);
+
+    let active=document.getElementById(
+        "nav-"+section
+    );
+
 
     if(active){
+
         active.classList.add("active-menu");
+
     }
 
 
-    // redraw graph
 
     if(section==="graph"){
-        setTimeout(()=>{
-            drawNetworkGraph();
-        },300);
+
+        setTimeout(
+
+            drawNetworkGraph,
+
+            300
+
+        );
+
     }
 
 }
 
 
 
-
-// ========================================
-// PAGE LOAD
-// ========================================
+// ===============================
+// LOAD PAGE
+// ===============================
 
 document.addEventListener(
+
 "DOMContentLoaded",
+
 ()=>{
+
 
     let active=document.body.dataset.active;
 
+
     if(!active){
+
         active="dashboard";
+
     }
+
 
     showSection(active);
 
+
     drawProtocolChart();
+
 
     drawThreatChart();
 
-});
+
+}
+
+);
 
 
 
-
-
-// ========================================
+// ===============================
 // NETWORK GRAPH
-// ========================================
+// ===============================
+
 
 function drawNetworkGraph(){
 
-    let container=
-    document.getElementById("network");
+
+    let container=document.getElementById(
+        "network"
+    );
 
 
     if(!container){
+
         return;
+
     }
 
 
-    if(graphNodes.length===0){
+
+    if(!graphNodes || graphNodes.length===0){
+
 
         container.innerHTML=
         "<h3 style='color:white;text-align:center;'>No Network Data Available</h3>";
 
+
         return;
+
     }
+
 
 
     container.innerHTML="";
 
 
-    let nodes =
-    new vis.DataSet(
+
+    let nodes=new vis.DataSet(
 
         graphNodes.map(node=>({
 
             id:node.id,
 
+
             label:node.label,
-
-            value:node.value,
-
-            title:node.title,
 
 
             color:{
 
-                background:node.color,
+                background:"#2563eb",
 
                 border:"#ffffff"
+
             },
 
 
             font:{
 
-                color:"#ffffff",
-
-                size:18,
-
-                face:"arial"
-
-            },
-
-
-            shadow:{
-
-                enabled:true,
-
-                size:15
+                color:"#ffffff"
 
             }
 
@@ -146,123 +165,22 @@ function drawNetworkGraph(){
 
 
 
-
-    let edges =
-    new vis.DataSet(
+    let edges=new vis.DataSet(
 
         graphEdges.map(edge=>({
 
             from:edge.from,
 
+
             to:edge.to,
 
 
-            arrows:{
-
-                to:{
-
-                    enabled:true,
-
-                    scaleFactor:0.6
-
-                }
-
-            },
-
-
-            color:{
-
-                color:"#8ab4ff",
-
-                highlight:"#ff4444"
-
-            },
-
-
-            width:3
+            arrows:"to"
 
         }))
 
     );
 
-
-
-
-
-    let options={
-
-
-        nodes:{
-
-            shape:"dot",
-
-            scaling:{
-
-                min:35,
-
-                max:85
-
-            }
-
-        },
-
-
-
-        edges:{
-
-            smooth:{
-
-                enabled:true,
-
-                type:"dynamic"
-
-            }
-
-        },
-
-
-
-        interaction:{
-
-            hover:true,
-
-            tooltipDelay:100,
-
-            zoomView:true,
-
-            dragView:true,
-
-            navigationButtons:true
-
-        },
-
-
-
-        physics:{
-
-            enabled:true,
-
-
-            barnesHut:{
-
-                gravitationalConstant:-10000,
-
-                springLength:250,
-
-                springConstant:0.04
-
-            },
-
-
-            stabilization:{
-
-                iterations:250
-
-            }
-
-        }
-
-    };
 
 
 
@@ -271,109 +189,112 @@ function drawNetworkGraph(){
 
         container,
 
+
         {
 
             nodes:nodes,
+
 
             edges:edges
 
         },
 
-        options
+
+        {
+
+            physics:true,
+
+
+            interaction:{
+
+                hover:true
+
+            }
+
+        }
 
     );
 
+
 }
-// ========================================
+
+
+
+
+// ===============================
 // PROTOCOL CHART
-// ========================================
+// ===============================
+
 
 function drawProtocolChart(){
 
-    let ctx=
-    document.getElementById(
+
+    let ctx=document.getElementById(
         "protocolChart"
     );
 
 
     if(!ctx){
+
         return;
+
     }
 
 
 
-    new Chart(ctx,{
+    new Chart(
 
-        type:"doughnut",
-
-
-        data:{
+        ctx,
 
 
-            labels:
+        {
 
-            Object.keys(protocolCount),
-
-
-
-            datasets:[{
+            type:"doughnut",
 
 
-                data:
-
-                Object.values(protocolCount),
+            data:{
 
 
+                labels:Object.keys(
+                    protocolCount || {}
+                ),
 
-                backgroundColor:[
 
-                    "#3498db",
+                datasets:[
 
-                    "#2ecc71",
+                    {
 
-                    "#f39c12",
+                    data:Object.values(
+                        protocolCount || {}
+                    )
 
-                    "#9b59b6"
+                    }
 
                 ]
-
-            }]
-
-        },
-
-
-
-        options:{
-
-
-            plugins:{
-
-
-                legend:{
-
-                    position:"bottom"
-
-                }
 
             }
 
         }
 
-
-    });
+    );
 
 }
-// ========================================
+
+
+
+
+// ===============================
 // THREAT CHART
-// ========================================
+// ===============================
+
 
 function drawThreatChart(){
 
 
-    let ctx=
-    document.getElementById(
+    let ctx=document.getElementById(
         "threatChart"
     );
+
 
 
     if(!ctx){
@@ -384,85 +305,55 @@ function drawThreatChart(){
 
 
 
+    new Chart(
 
-    new Chart(ctx,{
-
-
-        type:"bar",
+        ctx,
 
 
-
-        data:{
-
+        {
 
 
-            labels:
-
-            Object.keys(threatCount),
+            type:"bar",
 
 
+            data:{
 
 
-            datasets:[{
+                labels:Object.keys(
+                    threatCount || {}
+                ),
 
 
 
-                label:"Traffic Count",
+                datasets:[
+
+                    {
+
+                    label:"Traffic Count",
 
 
+                    data:Object.values(
+                        threatCount || {}
+                    )
 
-                data:
-
-                Object.values(threatCount),
-
-
-
-
-                backgroundColor:[
-
-                    "#27ae60",
-
-                    "#f39c12",
-
-                    "#e74c3c"
+                    }
 
                 ]
-
-            }]
-
-
-        },
-
-
-
-
-        options:{
-
-
-            responsive:true,
-
-
-
-            scales:{
-
-
-                y:{
-
-                    beginAtZero:true
-
-                }
-
 
             },
 
 
+            options:{
 
-            plugins:{
+
+                scales:{
 
 
-                legend:{
+                    y:{
 
-                    display:false
+                        beginAtZero:true
+
+                    }
 
                 }
 
@@ -470,6 +361,6 @@ function drawThreatChart(){
 
         }
 
-    });
+    );
 
 }
