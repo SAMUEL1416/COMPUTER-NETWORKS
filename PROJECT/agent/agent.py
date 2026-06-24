@@ -9,7 +9,8 @@ import pandas as pd
 from torch_geometric.nn import GCNConv
 from torch_geometric.data import Data
 
-SERVER_URL="https://cybershield-ai-wajo.onrender.com"
+SERVER_URL="https://cybershield-ai-wajo.onrender.com/agent"
+
 device_name=socket.gethostname()
 
 flows={}
@@ -18,12 +19,20 @@ last_send=time.time()
 reports_sent=0
 
 feature_names=[
-"protocol","src_port","dst_port","packet_size",
-"duration","packet_count","bytes_sent",
-"bytes_received","connection_count",
-"packet_rate","avg_packet_size",
+"protocol",
+"src_port",
+"dst_port",
+"packet_size",
+"duration",
+"packet_count",
+"bytes_sent",
+"bytes_received",
+"connection_count",
+"packet_rate",
+"avg_packet_size",
 "upload_download_ratio",
-"total_bytes","traffic_intensity"
+"total_bytes",
+"traffic_intensity"
 ]
 
 class CyberShieldGNN(torch.nn.Module):
@@ -41,6 +50,9 @@ class CyberShieldGNN(torch.nn.Module):
         x=self.dropout(x)
         return self.gcn3(x,edge_index)
 
+
+print("Loading CyberShield GNN Model...")
+
 model=CyberShieldGNN()
 
 model.load_state_dict(
@@ -54,14 +66,21 @@ model.eval()
 
 scaler=joblib.load("../scaler.pkl")
 
+print("GNN Model Loaded Successfully")
 
-def encode_protocol(p):
-    if p=="TCP":
+
+def encode_protocol(protocol):
+    protocol=str(protocol).upper()
+
+    if protocol=="TCP":
         return 1
-    if p=="UDP":
+
+    elif protocol=="UDP":
         return 2
-    if p=="ICMP":
+
+    elif protocol=="ICMP":
         return 3
+
     return 0
 
 
@@ -89,8 +108,10 @@ def predict(row):
         columns=feature_names
     )
 
+    scaled=scaler.transform(df)
+
     x=torch.tensor(
-        scaler.transform(df),
+        scaled,
         dtype=torch.float
     )
 
@@ -106,17 +127,17 @@ def predict(row):
             edge_index
         )
 
-        prob=torch.softmax(
+        probability=torch.softmax(
             output,
             dim=1
         )
 
         result=torch.argmax(
-            prob
+            probability
         ).item()
 
         score=round(
-            torch.max(prob).item()*100,
+            torch.max(probability).item()*100,
             2
         )
 
@@ -131,30 +152,34 @@ def predict(row):
         return "Attack","High Risk",score
 
 
-def reason(prediction):
+def create_reason(prediction):
 
     if prediction=="Attack":
-        return "GNN detected abnormal graph traffic behaviour"
+        return "GNN detected abnormal network graph behaviour"
 
     elif prediction=="Suspicious":
-        return "GNN detected unusual network pattern"
+        return "GNN detected unusual traffic communication pattern"
 
-    return "Normal network communication detected"
+    else:
+        return "Normal network behaviour identified"
 
 
-def action(prediction):
+def create_action(prediction):
 
     if prediction=="Attack":
-        return "Block traffic and investigate endpoint"
+        return "Block suspicious connection and investigate endpoint"
 
     elif prediction=="Suspicious":
-        return "Monitor network behaviour"
+        return "Monitor traffic behaviour continuously"
 
-    return "No action required"
+    else:
+        return "No action required"
 
 
+print("==============================")
 print("CyberShield AI Agent Started")
 print("Device:",device_name)
+print("==============================")
 
 
 def process_packet(packet):
@@ -164,29 +189,43 @@ def process_packet(packet):
     if IP not in packet:
         return
 
+
     protocol="OTHER"
     src_port=0
     dst_port=0
 
+
     if TCP in packet:
+
         protocol="TCP"
         src_port=packet[TCP].sport
         dst_port=packet[TCP].dport
 
+
     elif UDP in packet:
+
         protocol="UDP"
         src_port=packet[UDP].sport
         dst_port=packet[UDP].dport
 
 
-    flow=(packet[IP].src,packet[IP].dst,dst_port)
+    flow=(
+        packet[IP].src,
+        packet[IP].dst,
+        dst_port
+    )
 
 
     if flow not in flows:
-        flows[flow]={"packets":0,"bytes":0}
+
+        flows[flow]={
+            "packets":0,
+            "bytes":0
+        }
 
 
     flows[flow]["packets"]+=1
+
     flows[flow]["bytes"]+=len(packet)
 
 
@@ -198,6 +237,7 @@ def process_packet(packet):
 
 
     data={
+        "device":device_name,
         "src_ip":packet[IP].src,
         "dst_ip":packet[IP].dst,
         "protocol":protocol,
@@ -214,32 +254,43 @@ def process_packet(packet):
 
     prediction,risk,score=predict(data)
 
+
     data["prediction"]=prediction
     data["risk"]=risk
     data["score"]=score
-    data["reason"]=reason(prediction)
-    data["action"]=action(prediction)
+    data["reason"]=create_reason(prediction)
+    data["action"]=create_action(prediction)
 
 
     try:
 
-        requests.post(
+        response=requests.post(
             SERVER_URL,
             json=data,
-            timeout=3
+            timeout=5
         )
 
+
+        print(
+            "Server Response:",
+            response.text
+        )
+
+
         reports_sent+=1
+
 
         print(
             "AI Reports Sent:",
             reports_sent
         )
 
-    except:
+
+    except Exception as e:
 
         print(
-            "Server Offline"
+            "Connection Error:",
+            e
         )
 
 
