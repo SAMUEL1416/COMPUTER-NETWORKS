@@ -1,17 +1,31 @@
 from flask import Flask,render_template,request,jsonify
 import pandas as pd
 import os
+import json
 from datetime import datetime
 
 app=Flask(__name__)
 
 UPLOAD_FOLDER="uploads"
+DATA_FILE="agent_data.json"
+
 os.makedirs(UPLOAD_FOLDER,exist_ok=True)
+
 app.config["UPLOAD_FOLDER"]=UPLOAD_FOLDER
 
 print("CyberShield AI Cloud Dashboard Started")
 
-agent_logs=[]
+
+def load_agent_data():
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE,"r") as f:
+            return json.load(f)
+    return []
+
+
+def save_agent_data(data):
+    with open(DATA_FILE,"w") as f:
+        json.dump(data,f)
 
 
 def classify_received(prediction):
@@ -30,58 +44,20 @@ def generate_reason(prediction,data):
         elif data.get("packet_size",0)>5000:
             return "Large abnormal packet behaviour detected by endpoint GNN agent"
         else:
-            return "Graph Neural Network detected abnormal traffic behaviour"
+            return "Graph Neural Network detected abnormal traffic pattern"
     elif prediction=="Suspicious":
-        return "Traffic behaviour differs from normal network patterns"
+        return "Traffic behaviour differs from learned normal network pattern"
     else:
         return "Traffic follows normal communication behaviour"
 
 
 def generate_action(prediction):
     if prediction=="Attack":
-        return "Restrict suspicious traffic and investigate endpoint activity"
+        return "Block suspicious traffic and investigate endpoint"
     elif prediction=="Suspicious":
-        return "Monitor connection and verify network behaviour"
+        return "Monitor connection behaviour"
     else:
-        return "No defensive action required"
-
-
-def analyze_dataset(path):
-    df=pd.read_csv(path)
-
-    required=[
-        "src_ip",
-        "dst_ip",
-        "protocol",
-        "packet_size",
-        "duration",
-        "prediction",
-        "score"
-    ]
-
-    for c in required:
-        if c not in df.columns:
-            return None,"Missing column: "+c
-
-    results=[]
-
-    for _,r in df.iterrows():
-        prediction=r["prediction"]
-
-        results.append({
-            "Source IP":r["src_ip"],
-            "Destination IP":r["dst_ip"],
-            "Protocol":r["protocol"],
-            "Packet Size":r["packet_size"],
-            "Duration":r["duration"],
-            "Graph Score":r["score"],
-            "Prediction":prediction,
-            "Risk Level":classify_received(prediction),
-            "Reason":generate_reason(prediction,r),
-            "Recommended Action":generate_action(prediction)
-        })
-
-    return pd.DataFrame(results),None
+        return "No action required"
 
 
 def create_graph(records):
@@ -90,6 +66,7 @@ def create_graph(records):
     added=set()
 
     for r in records:
+
         src=r.get("Source IP")
         dst=r.get("Destination IP")
 
@@ -136,8 +113,41 @@ def create_summary(records,nodes):
     }
 
 
+def analyze_dataset(path):
+
+    df=pd.read_csv(path)
+
+    results=[]
+
+    for _,row in df.iterrows():
+
+        prediction=row.get(
+            "prediction",
+            "Normal"
+        )
+
+        record={
+            "Timestamp":datetime.now().strftime("%H:%M:%S"),
+            "Source IP":row.get("src_ip"),
+            "Destination IP":row.get("dst_ip"),
+            "Protocol":row.get("protocol"),
+            "Packet Size":row.get("packet_size"),
+            "Duration":row.get("duration"),
+            "Graph Score":row.get("score",0),
+            "Prediction":prediction,
+            "Risk Level":classify_received(prediction),
+            "Reason":generate_reason(prediction,row),
+            "Recommended Action":generate_action(prediction)
+        }
+
+        results.append(record)
+
+    return pd.DataFrame(results),None
+
+
 @app.route("/agent",methods=["POST"])
 def receive_agent():
+
     data=request.json
 
     prediction=data.get(
@@ -156,7 +166,10 @@ def receive_agent():
         "Duration":data.get("duration"),
         "Graph Score":data.get("score"),
         "Prediction":prediction,
-        "Risk Level":classify_received(prediction),
+        "Risk Level":data.get(
+            "risk",
+            classify_received(prediction)
+        ),
         "Reason":data.get(
             "reason",
             generate_reason(prediction,data)
@@ -167,7 +180,11 @@ def receive_agent():
         )
     }
 
+    agent_logs=load_agent_data()
+
     agent_logs.append(record)
+
+    save_agent_data(agent_logs)
 
     print(
         "Agent Reports Stored:",
@@ -176,7 +193,7 @@ def receive_agent():
 
     return jsonify({
         "status":"received",
-        "total":len(agent_logs)
+        "stored":len(agent_logs)
     })
 
 
@@ -205,9 +222,11 @@ def index():
         "attack":0
     }
 
+
     if request.method=="POST":
 
         action=request.form.get("action")
+
 
         if action=="upload":
 
@@ -224,9 +243,7 @@ def index():
 
             if df is not None:
 
-                dataset_results=df.to_dict(
-                    "records"
-                )
+                dataset_results=df.to_dict("records")
 
                 graph_nodes,graph_edges=create_graph(
                     dataset_results
@@ -259,7 +276,7 @@ def index():
 
         elif action=="live":
 
-            live_results=agent_logs
+            live_results=load_agent_data()
 
             graph_nodes,graph_edges=create_graph(
                 live_results
@@ -285,7 +302,7 @@ def index():
                 if x["Prediction"]!="Normal"
             ]
 
-            success="Agent live capture loaded: "+str(len(agent_logs))+" packets"
+            success="Agent live capture loaded: "+str(len(live_results))+" packets"
 
             active_section="live"
 

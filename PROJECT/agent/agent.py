@@ -9,8 +9,7 @@ import pandas as pd
 from torch_geometric.nn import GCNConv
 from torch_geometric.data import Data
 
-SERVER_URL="http://127.0.0.1:5000/agent"
-
+SERVER_URL="https://cybershield-ai-wajo.onrender.com"
 device_name=socket.gethostname()
 
 flows={}
