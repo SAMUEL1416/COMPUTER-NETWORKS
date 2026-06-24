@@ -11,8 +11,6 @@ DATA_FILE="agent_data.json"
 os.makedirs(UPLOAD_FOLDER,exist_ok=True)
 app.config["UPLOAD_FOLDER"]=UPLOAD_FOLDER
 
-print("CyberShield AI Dashboard Started")
-
 
 def load_agent_data():
     if os.path.exists(DATA_FILE):
@@ -26,14 +24,6 @@ def save_agent_data(data):
         json.dump(data,f)
 
 
-def risk(prediction):
-    if prediction=="Attack":
-        return "High Risk"
-    elif prediction=="Suspicious":
-        return "Medium Risk"
-    return "Low Risk"
-
-
 def create_graph(records):
     nodes=[]
     edges=[]
@@ -41,31 +31,24 @@ def create_graph(records):
 
     for r in records:
 
-        src=r.get("Source IP")
-        dst=r.get("Destination IP")
+        src=r.get("Source IP") or r.get("src_ip")
+        dst=r.get("Destination IP") or r.get("dst_ip")
 
         if src and src not in added:
-            nodes.append(
-                {"id":src,"label":src}
-            )
+            nodes.append({"id":src,"label":src})
             added.add(src)
 
         if dst and dst not in added:
-            nodes.append(
-                {"id":dst,"label":dst}
-            )
+            nodes.append({"id":dst,"label":dst})
             added.add(dst)
 
         if src and dst:
-            edges.append(
-                {"from":src,"to":dst}
-            )
+            edges.append({"from":src,"to":dst})
 
     return nodes,edges
 
 
 def count_values(records,key):
-
     result={}
 
     for r in records:
@@ -77,9 +60,44 @@ def count_values(records,key):
     return result
 
 
+def make_summary(records,nodes):
+
+    normal=0
+    suspicious=0
+    attack=0
+
+    for r in records:
+
+        p=r.get("Prediction")
+
+        if p=="Normal":
+            normal+=1
+
+        elif p=="Suspicious":
+            suspicious+=1
+
+        elif p=="Attack":
+            attack+=1
+
+
+    return {
+
+        "total":len(records),
+
+        "nodes":len(nodes),
+
+        "normal":normal,
+
+        "suspicious":suspicious,
+
+        "attack":attack
+
+    }
+
+
 
 @app.route("/agent",methods=["POST"])
-def agent():
+def receive_agent():
 
     data=request.json
 
@@ -87,6 +105,7 @@ def agent():
         "prediction",
         "Normal"
     )
+
 
     record={
 
@@ -102,35 +121,32 @@ def agent():
         "Protocol":
         data.get("protocol"),
 
+        "Source Port":
+        data.get("src_port"),
+
+        "Destination Port":
+        data.get("dst_port"),
+
         "Packet Size":
         data.get("packet_size"),
 
         "Duration":
         data.get("duration"),
 
+        "Graph Score":
+        data.get("score"),
+
         "Prediction":
         prediction,
 
         "Risk Level":
-        data.get(
-            "risk",
-            risk(prediction)
-        ),
-
-        "Score":
-        data.get("score"),
+        data.get("risk"),
 
         "Reason":
-        data.get(
-            "reason",
-            "Analysed by GNN"
-        ),
+        data.get("reason"),
 
-        "Action":
-        data.get(
-            "action",
-            "Monitor Traffic"
-        )
+        "Recommended Action":
+        data.get("action")
 
     }
 
@@ -139,9 +155,7 @@ def agent():
 
     records.append(record)
 
-    save_agent_data(
-        records[-200:]
-    )
+    save_agent_data(records[-200:])
 
 
     return jsonify(
@@ -159,12 +173,34 @@ def index():
     dataset_results=[]
     live_results=[]
 
-    nodes=[]
-    edges=[]
+    graph_nodes=[]
+    graph_edges=[]
 
+    protocol_count={}
     threat_count={}
 
-    section="home"
+    alerts=[]
+
+    success=None
+    error=None
+
+    active_section="dashboard"
+
+
+    summary={
+
+        "total":0,
+
+        "nodes":0,
+
+        "normal":0,
+
+        "suspicious":0,
+
+        "attack":0
+
+    }
+
 
 
     if request.method=="POST":
@@ -176,42 +212,96 @@ def index():
 
             live_results=load_agent_data()
 
-            nodes,edges=create_graph(
+            graph_nodes,graph_edges=create_graph(
                 live_results
             )
+
+
+            protocol_count=count_values(
+                live_results,
+                "Protocol"
+            )
+
 
             threat_count=count_values(
                 live_results,
                 "Prediction"
             )
 
-            section="live"
+
+            summary=make_summary(
+                live_results,
+                graph_nodes
+            )
+
+
+            alerts=[
+                r for r in live_results
+                if r["Prediction"]!="Normal"
+            ]
+
+
+            success="Live GNN capture loaded successfully"
+
+            active_section="live"
 
 
 
         elif action=="upload":
 
+
             file=request.files["dataset"]
+
 
             path=os.path.join(
                 UPLOAD_FOLDER,
                 file.filename
             )
 
+
             file.save(path)
 
+
             df=pd.read_csv(path)
+
 
             dataset_results=df.to_dict(
                 "records"
             )
 
 
-            nodes,edges=create_graph(
+            graph_nodes,graph_edges=create_graph(
                 dataset_results
             )
 
-            section="dataset"
+
+            protocol_count=count_values(
+                dataset_results,
+                "protocol"
+            )
+
+
+            threat_count=count_values(
+                dataset_results,
+                "Prediction"
+            )
+
+
+            summary=make_summary(
+                dataset_results,
+                graph_nodes
+            )
+
+
+            alerts=[
+                r for r in dataset_results
+                if r.get("Prediction")!="Normal"
+            ]
+
+
+            success="Dataset analysed successfully"
+
+            active_section="dataset"
 
 
 
@@ -223,13 +313,23 @@ def index():
 
         live_results=live_results,
 
-        nodes=nodes,
+        graph_nodes=graph_nodes,
 
-        edges=edges,
+        graph_edges=graph_edges,
+
+        protocol_count=protocol_count,
 
         threat_count=threat_count,
 
-        section=section
+        alerts=alerts,
+
+        summary=summary,
+
+        success=success,
+
+        error=error,
+
+        active_section=active_section
 
     )
 
@@ -243,6 +343,7 @@ if __name__=="__main__":
             5000
         )
     )
+
 
     app.run(
         host="0.0.0.0",
