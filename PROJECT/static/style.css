@@ -1,0 +1,435 @@
+/* =========================
+   GLOBAL
+========================= */
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#edf4ff;
+    color:#111;
+}
+
+
+/* =========================
+   NAVBAR
+========================= */
+
+.navbar{
+    height:80px;
+    background:linear-gradient(90deg,#020f22,#063b75);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 30px;
+    color:white;
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.shield{
+    font-size:42px;
+}
+
+.brand h1{
+    margin:0;
+    font-size:28px;
+}
+
+.brand p{
+    margin:4px 0;
+    font-size:13px;
+}
+
+
+.menu{
+    display:flex;
+    gap:22px;
+}
+
+
+.menu button{
+    background:none;
+    border:none;
+    color:white;
+    font-size:15px;
+    font-weight:bold;
+    cursor:pointer;
+    padding-bottom:8px;
+    transition:0.3s;
+}
+
+
+.menu button:hover{
+    color:#ffd166;
+    transform:translateY(-2px);
+}
+
+
+/* active selected section */
+
+.active-menu{
+    color:#ffd166 !important;
+    border-bottom:4px solid #ffd166;
+}
+
+
+
+/* =========================
+   PAGE DESIGN
+========================= */
+
+
+.container{
+    padding:20px;
+}
+
+
+.page-section{
+    display:none;
+}
+
+
+
+.module{
+    background:white;
+    padding:22px;
+    border-radius:14px;
+    margin-bottom:20px;
+    box-shadow:0 3px 15px rgba(0,0,0,0.10);
+}
+
+
+.module h2{
+    text-align:center;
+    margin-top:0;
+    padding-bottom:15px;
+    border-bottom:1px solid #ddd;
+}
+
+
+.blue-border{
+    border:2px solid #2f80ed;
+}
+
+
+.green-border{
+    border:2px solid #27ae60;
+}
+
+
+.purple-border{
+    border:2px solid #8e44ad;
+}
+
+
+
+
+/* =========================
+   DASHBOARD CARDS
+========================= */
+
+.summary{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+    margin:25px 0;
+}
+
+
+.summary div{
+    background:linear-gradient(
+        135deg,
+        #ffffff,
+        #f3f8ff
+    );
+
+    border:1px solid #cfe1ff;
+    border-radius:14px;
+    text-align:center;
+    padding:20px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.06);
+}
+
+
+.summary h1{
+    color:#0057e7;
+    font-size:34px;
+    margin:10px;
+}
+
+
+
+
+/* =========================
+   MODULE 1
+========================= */
+
+.two-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:25px;
+}
+
+
+.box{
+    border:1px solid #b7d3ff;
+    border-radius:14px;
+    padding:20px;
+    min-height:260px;
+}
+
+
+.box h3{
+    text-align:center;
+}
+
+
+
+/* =========================
+   FILE UPLOAD
+========================= */
+
+
+.upload-box{
+    height:160px;
+    border:2px dashed #7fa6dd;
+    border-radius:14px;
+    background:#f7fbff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+
+.upload-box:hover{
+    background:#edf6ff;
+}
+
+
+.upload-box input{
+    display:none;
+}
+
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+.blue-btn{
+    width:100%;
+    padding:13px;
+    margin-top:20px;
+    background:#0057e7;
+    color:white;
+    border:none;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+
+.red-btn{
+    padding:13px 40px;
+    background:#e63946;
+    color:white;
+    border:none;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+
+button:hover{
+    opacity:0.85;
+}
+
+
+
+
+/* =========================
+   STATUS
+========================= */
+
+.status{
+    background:#eaffef;
+    color:#087a20;
+    padding:15px;
+    border-radius:10px;
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+
+
+
+/* =========================
+   TABLE
+========================= */
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+    font-size:13px;
+}
+
+
+th{
+    background:#071d38;
+    color:white;
+    padding:11px;
+}
+
+
+td{
+    border:1px solid #ddd;
+    padding:9px;
+    text-align:center;
+}
+
+
+.Normal{
+    color:#27ae60;
+    font-weight:bold;
+}
+
+
+.Suspicious{
+    color:#f39c12;
+    font-weight:bold;
+}
+
+
+.Attack{
+    color:#e74c3c;
+    font-weight:bold;
+}
+
+
+
+/* =========================
+   GRAPH SECTION
+========================= */
+
+.three-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:20px;
+}
+
+
+.chart-card{
+    border:1px solid #d6d6d6;
+    border-radius:14px;
+    padding:15px;
+    background:white;
+    min-height:380px;
+}
+
+
+.chart-card h3{
+    text-align:center;
+}
+
+
+#network{
+    height:330px;
+    border-radius:14px;
+    background:radial-gradient(
+        circle,
+        #17345e,
+        #06182f
+    );
+}
+
+
+canvas{
+    max-height:300px;
+}
+
+
+
+/* =========================
+   ALERTS
+========================= */
+
+.alert-box{
+    background:#fff3f3;
+    border-left:6px solid #e74c3c;
+    border-radius:10px;
+    padding:15px;
+    margin-bottom:15px;
+}
+
+
+.alert-box h3{
+    color:#e74c3c;
+}
+
+
+
+
+/* =========================
+   MESSAGE BOX
+========================= */
+
+.success{
+    background:#eaffef;
+    color:#087a20;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:15px;
+    font-weight:bold;
+}
+
+
+.error{
+    background:#ffe5e5;
+    color:#c70000;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:15px;
+    font-weight:bold;
+}
+
+
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width:900px){
+
+    .two-grid,
+    .three-grid,
+    .summary{
+        grid-template-columns:1fr;
+    }
+
+
+    .navbar{
+        flex-direction:column;
+        height:auto;
+        padding:15px;
+    }
+
+
+    .menu{
+        flex-wrap:wrap;
+        justify-content:center;
+    }
+
+}

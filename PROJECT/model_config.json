@@ -1,0 +1,10 @@
+{
+    "input_features": 14,
+    "hidden_layers": [
+        128,
+        64
+    ],
+    "output_classes": 3,
+    "normalization": "StandardScaler",
+    "explainable_ai": "GNNExplainer"
+}

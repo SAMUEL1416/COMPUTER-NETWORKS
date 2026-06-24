@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CyberShield AI</title>
+
+<link rel="stylesheet" href="{{url_for('static',filename='style.css')}}">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.6/dist/vis-network.min.js"></script>
+
+</head>
+
+<body data-active="{{active_section}}">
+
+
+<!-- ================= NAVBAR ================= -->
+
+
+<div class="navbar">
+
+<div class="brand">
+
+<div class="shield">
+🛡
+</div>
+
+<div>
+
+<h1>
+CyberShield AI
+</h1>
+
+<p>
+Intelligent Network Threat Detection Using Graph Neural Networks
+</p>
+
+</div>
+
+</div>
+
+
+
+<div class="menu">
+
+<button id="nav-dashboard" onclick="showSection('dashboard')">
+🏠 Dashboard
+</button>
+
+
+<button id="nav-dataset" onclick="showSection('dataset')">
+📊 Dataset Analysis
+</button>
+
+
+<button id="nav-live" onclick="showSection('live')">
+📡 Live Capture
+</button>
+
+
+<button id="nav-graph" onclick="showSection('graph')">
+🕸 Graph Intelligence
+</button>
+
+
+<button id="nav-alerts" onclick="showSection('alerts')">
+🚨 Alerts
+</button>
+
+
+<button id="nav-about" onclick="showSection('about')">
+ℹ About
+</button>
+
+</div>
+
+</div>
+
+
+
+
+
+<div class="container">
+
+
+{% if success %}
+
+<div class="success">
+
+{{success}}
+
+</div>
+
+{% endif %}
+
+
+
+{% if error %}
+
+<div class="error">
+
+{{error}}
+
+</div>
+
+{% endif %}
+
+
+
+
+
+<!-- ================= DASHBOARD ================= -->
+
+
+<section id="dashboard" class="page-section">
+
+
+<div class="module blue-border">
+
+
+<h2>
+MODULE 1 : NETWORK TRAFFIC COLLECTION
+</h2>
+
+
+
+<div class="summary">
+
+
+<div>
+
+📡 Total Network Packets
+
+<h1>
+{{summary.total}}
+</h1>
+
+</div>
+
+
+
+<div>
+
+🌐 Graph Nodes (IP Devices)
+
+<h1>
+{{summary.nodes}}
+</h1>
+
+</div>
+
+
+
+
+<div>
+
+🟢 Normal Traffic
+
+<h1>
+{{summary.normal}}
+</h1>
+
+</div>
+
+
+
+
+<div>
+
+🔴 Detected Threat Events
+
+<h1>
+
+{{summary.attack + summary.suspicious}}
+
+</h1>
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="two-grid">
+
+
+
+<!-- DATASET -->
+
+
+<div class="box">
+
+
+<h3>
+Dataset-Based Network Traffic Analysis
+</h3>
+
+
+
+<form method="POST" enctype="multipart/form-data">
+
+
+<input type="hidden" name="action" value="upload">
+
+
+<label class="upload-box">
+
+📁
+
+<br><br>
+
+Upload Network CSV Dataset
+
+
+<input type="file" name="dataset" accept=".csv" required>
+
+
+</label>
+
+
+<button class="blue-btn">
+
+Analyze Dataset
+
+</button>
+
+
+</form>
+
+
+</div>
+
+
+
+
+
+
+<!-- LIVE -->
+
+
+<div class="box">
+
+
+<h3>
+
+Real-Time Network Traffic Capture
+
+</h3>
+
+
+
+<div class="status">
+
+🟢 Packet Capture Ready
+
+</div>
+
+
+
+
+<form method="POST">
+
+
+<input type="hidden" name="action" value="live">
+
+
+<button class="red-btn">
+
+Start Capture
+
+</button>
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</section>
+<!-- ================= DATASET ANALYSIS ================= -->
+
+<section id="dataset" class="page-section">
+
+<div class="module green-border">
+
+<h2>
+MODULE 2 : GNN-BASED THREAT DETECTION
+</h2>
+
+<h3>
+Dataset Traffic Threat Detection Results
+</h3>
+
+<table>
+
+<tr>
+<th>Source IP Address</th>
+<th>Destination IP Address</th>
+<th>Protocol</th>
+<th>Packet Size (bytes)</th>
+<th>Duration (sec)</th>
+<th>GNN Graph Score (%)</th>
+<th>Threat Prediction</th>
+<th>Detection Reason</th>
+</tr>
+
+
+{% if dataset_results %}
+
+{% for row in dataset_results %}
+
+<tr>
+
+<td>
+{{row.src_ip}}
+</td>
+
+<td>
+{{row.dst_ip}}
+</td>
+
+<td>
+{{row.protocol}}
+</td>
+
+<td>
+{{row.packet_size}}
+</td>
+
+<td>
+{{row.duration}}
+</td>
+
+<td>
+{{row.Graph_Score}}
+</td>
+
+<td class="{{row.Prediction}}">
+{{row.Prediction}}
+</td>
+
+<td>
+{{row.Reason}}
+</td>
+
+</tr>
+
+{% endfor %}
+
+
+{% else %}
+
+<tr>
+
+<td colspan="8">
+
+Upload CSV dataset from Dashboard to view GNN analysis.
+
+</td>
+
+</tr>
+
+{% endif %}
+
+</table>
+
+</div>
+
+</section>
+
+
+
+
+
+<!-- ================= LIVE CAPTURE ================= -->
+
+<section id="live" class="page-section">
+
+<div class="module blue-border">
+
+<h2>
+REAL-TIME LIVE PACKET CAPTURE USING GNN
+</h2>
+
+
+<table>
+
+<tr>
+
+<th>No.</th>
+
+<th>Capture Time (HH:MM:SS)</th>
+
+<th>Source IP Address</th>
+
+<th>Destination IP Address</th>
+
+<th>Protocol</th>
+
+<th>Source Port Number</th>
+<th>Destination Port Number</th>
+
+<th>Packet Size (bytes)</th>
+
+<th>Duration (sec)</th>
+
+<th>GNN Threat Score (%)</th>
+
+<th>Threat Status</th>
+
+<th>Detection Reason</th>
+
+</tr>
+
+
+{% if live_results %}
+
+{% for row in live_results %}
+
+<tr>
+
+
+<td>
+{{loop.index}}
+</td>
+
+
+<td>
+{{row["Timestamp"]}}
+</td>
+
+
+<td>
+{{row["Source IP"]}}
+</td>
+
+
+<td>
+{{row["Destination IP"]}}
+</td>
+
+
+<td>
+{{row["Protocol"]}}
+</td>
+
+
+<td>
+{{row["Source Port"]}}
+</td>
+
+<td>
+{{row["Destination Port"]}}
+</td>
+
+
+<td>
+{{row["Packet Size"]}}
+</td>
+
+
+<td>
+{{row["Duration"]}}
+</td>
+
+
+<td>
+{{row["Graph Score"]}}
+</td>
+
+
+<td class="{{row['Prediction']}}">
+{{row["Prediction"]}}
+</td>
+
+
+<td>
+{{row["Reason"]}}
+</td>
+
+
+</tr>
+
+{% endfor %}
+
+
+
+{% else %}
+
+<tr>
+
+<td colspan="12">
+
+Start real-time packet capture from Dashboard.
+
+</td>
+
+</tr>
+
+{% endif %}
+
+
+</table>
+
+
+</div>
+
+</section>
+<!-- ================= GRAPH VISUALIZATION ================= -->
+
+<section id="graph" class="page-section">
+
+<div class="module purple-border">
+
+<h2>
+MODULE 3 : GRAPH VISUALIZATION & ANALYTICS
+</h2>
+
+<div class="three-grid">
+
+<div class="chart-card">
+
+<h3>
+Network Communication Graph
+</h3>
+
+<div id="network"></div>
+
+</div>
+
+
+<div class="chart-card">
+
+<h3>
+Protocol Distribution
+</h3>
+
+<canvas id="protocolChart"></canvas>
+
+</div>
+
+
+<div class="chart-card">
+
+<h3>
+Threat Classification Distribution
+</h3>
+
+<canvas id="threatChart"></canvas>
+
+</div>
+
+</div>
+
+
+<div class="summary">
+
+<div>
+
+📡 Total Packets
+
+<h1>
+{{summary.total}}
+</h1>
+
+</div>
+
+
+<div>
+
+🌐 Total Graph Nodes
+
+<h1>
+{{summary.nodes}}
+</h1>
+
+</div>
+
+
+<div>
+
+🟢 Normal Traffic
+
+<h1>
+{{summary.normal}}
+</h1>
+
+</div>
+
+
+<div>
+
+🚨 Threat Traffic
+
+<h1>
+
+{{summary.suspicious + summary.attack}}
+
+</h1>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+
+
+
+<!-- ================= ALERTS ================= -->
+
+<section id="alerts" class="page-section">
+<div class="module purple-border">
+
+<h2>ADAPTIVE AI CYBER DEFENSE ALERT SYSTEM</h2>
+
+{% if alerts %}
+
+{% for alert in alerts %}
+
+<div class="alert-box">
+
+<h3>🚨 AI Threat Alert</h3>
+
+<p>
+<b>Threat Classification:</b>
+{{alert.Prediction}}
+</p>
+
+<p>
+<b>Risk Level:</b>
+
+{% if alert.Risk_Level %}
+
+{{alert.Risk_Level}}
+
+{% else %}
+
+{{alert["Risk Level"]}}
+
+{% endif %}
+
+</p>
+
+
+<p>
+<b>GNN Confidence Score:</b>
+
+{% if alert.Graph_Score %}
+
+{{alert.Graph_Score}} %
+
+{% else %}
+
+{{alert["Graph Score"]}} %
+
+{% endif %}
+
+</p>
+
+
+<p>
+<b>AI Detection Reason:</b>
+
+{{alert.Reason}}
+
+</p>
+
+
+<p>
+<b>AI Recommended Action:</b>
+
+{% if alert.Recommended_Action %}
+
+{{alert.Recommended_Action}}
+
+{% else %}
+
+{{alert["Recommended Action"]}}
+
+{% endif %}
+
+</p>
+
+</div>
+
+{% endfor %}
+
+
+{% else %}
+
+<div class="status">
+
+✅ No security threat detected by GNN.
+
+<br>
+
+Network communication behaviour is normal.
+
+</div>
+
+{% endif %}
+
+</div>
+</section>
+
+<!-- ================= ABOUT ================= -->
+
+<section id="about" class="page-section">
+
+
+<div class="module blue-border">
+
+
+<h2>
+ABOUT CYBERSHIELD AI
+</h2>
+
+
+
+<p>
+
+CyberShield AI is an intelligent network security platform
+that detects cyber threats using Graph Neural Networks.
+
+</p>
+
+
+
+<p>
+
+The system converts network traffic into graph structures where:
+
+</p>
+
+
+
+<ul>
+
+<li>
+IP addresses are represented as graph nodes.
+</li>
+
+<li>
+Communication links are represented as graph edges.
+</li>
+
+<li>
+Traffic features such as packet size, protocol, and duration are used as node attributes.
+</li>
+
+</ul>
+
+
+
+
+<p>
+
+A trained Graph Convolutional Network (GCN) analyzes network behaviour using
+message passing and graph feature learning to classify traffic into:
+
+</p>
+
+
+<ul>
+
+<li>
+🟢 Normal Traffic
+</li>
+
+<li>
+🟠 Suspicious Activity
+</li>
+
+<li>
+🔴 Attack Traffic
+</li>
+
+</ul>
+
+
+
+<p>
+
+The platform supports:
+
+</p>
+
+
+<ul>
+
+<li>
+Dataset based network analysis
+</li>
+
+<li>
+Real-time packet monitoring
+</li>
+
+<li>
+GNN threat prediction
+</li>
+
+<li>
+Interactive graph visualization
+</li>
+
+<li>
+Adaptive security alerts
+</li>
+
+</ul>
+
+
+</div>
+
+
+</section>
+
+
+</div>
+
+
+
+
+
+
+<!-- ================= JAVASCRIPT DATA ================= -->
+
+
+<script>
+
+const graphNodes =
+{{graph_nodes | tojson | safe}};
+
+
+const graphEdges =
+{{graph_edges | tojson | safe}};
+
+
+const protocolCount =
+{{protocol_count | tojson | safe}};
+
+
+const threatCount =
+{{threat_count | tojson | safe}};
+
+</script>
+
+
+
+<script src="{{url_for('static',filename='script.js')}}">
+</script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,30 @@
+{
+    "accuracy": 99.2,
+    "precision": 99.21,
+    "recall": 99.2,
+    "f1_score": 99.2,
+    "confusion_matrix": [
+        [
+            399984,
+            16,
+            0
+        ],
+        [
+            3872,
+            295877,
+            251
+        ],
+        [
+            0,
+            3828,
+            296172
+        ]
+    ],
+    "model": "Graph Convolutional Network",
+    "features_used": 14,
+    "classes": [
+        "Normal",
+        "Suspicious",
+        "Attack"
+    ]
+}
